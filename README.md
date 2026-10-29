@@ -1,5 +1,7 @@
 # NZ Network Asset Insights
 
+**Live dashboard:** https://vera-kaku.github.io/nz-network-asset-insights/
+
 Portfolio performance analysis of New Zealand electricity distribution assets, built from the information disclosures that every regulated electricity distribution business (EDB) files with the Commerce Commission.
 
 The project asks the questions a portfolio performance team asks about its own asset base:
