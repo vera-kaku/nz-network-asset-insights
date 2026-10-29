@@ -1,0 +1,70 @@
+# How the long-format ComCom disclosure rows are mapped to tidy tables.
+# Patterns are case-insensitive regular expressions matched against the raw columns.
+# Run `assets profile` on the real file to see the exact labels before changing these.
+
+sources:
+  parquet_url: https://www.comcom.govt.nz/assets/file/0035/366299/EDB_ID_Full_2026-06-01.parquet
+  dictionary_url: https://www.comcom.govt.nz/assets/file/0032/366296/EDB_ID_Data_Dictionary.json
+  landing_page: https://www.comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/information-disclosed-by-electricity-distributors
+
+# Schedule 12a, Report on Asset Condition (forecast disclosure, one row per asset class)
+condition:
+  schedule: '12a|asset condition'
+  # H1 to H5 scale (from 2019). Earlier disclosures used a different Grade 1 to 4 scale, which is not
+  # comparable and is left out.
+  grade: '^\s*(h[1-5]|grade unknown)\s*$'
+  h_scale_from: 2019
+  total_tolerance: [95, 105]     # grades of a class must add up to 100% within this band
+  replace_5yr: 'replaced in next (5|five) years'
+  data_accuracy: 'data accuracy'
+  # raw columns that hold each dimension
+  asset_category_col: category
+  asset_class_col: sub_category
+
+# Schedule 9b, Asset Age Profile (historic disclosure)
+age:
+  schedule: '9b|age profile'
+  quantity: 'items at end of year'
+  age_unknown: 'age unknown'
+  asset_category_col: category
+  asset_class_col: sub_category
+
+# Schedule 7, Comparison of Forecasts to Actual Expenditure (historic disclosure)
+delivery:
+  schedule: 'schedule 7:'
+  measure_col: sub_category      # Forecast / Actual / Variance
+  item_col: description          # expenditure line
+  capex_section: '^7\(ii\)'
+  opex_section: '^7\(iii\)'
+  total_items: '^(expenditure on (network |non-network )?assets|network opex|non-network opex|operational expenditure|total )'
+
+# Schedule 10, Report on Network Reliability (historic disclosure)
+reliability:
+  schedule: 'schedule 10:'
+  by_class: 'saifi and saidi by class'
+  planned: '^class b'
+  unplanned: '^class c'
+  cause_category: '^cause$'
+  asset_cause: 'defective equipment'
+
+# Thresholds used for early-warning flags
+flags:
+  delivery_variance_pct: 20      # actual vs forecast spend outside +/- this band
+  coverage_gap_pp: 5             # poor-condition share exceeds planned 5-year replacement by this many points
+  rising_poor_share_pp: 3        # poor-condition share up by this many points over the lookback
+  lookback_years: 3
+  step_change_pp: 20             # one-year jump in a network's H1/H2 share treated as a grading change
+  min_quantity: 10               # holdings smaller than this (units or km) are not ranked or flagged
+  delivery_min_forecast_k: 1000  # ignore capex lines forecast below $1m
+
+# Consequence weights for ranking. These are an explicit assumption, not disclosed data:
+# public disclosures do not include criticality, so the ranking is also reported with all weights = 1.
+consequence_weights:
+  default: 1
+  patterns:
+    'subtransmission': 3
+    'zone substation': 3
+    'protection': 2
+    'distribution (line|cable|switchgear|transformer|substation)': 2
+    'overhead line': 2
+    'scada': 2

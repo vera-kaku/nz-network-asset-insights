@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nz-network-asset-insights"
+version = "0.1.0"
+description = "Asset health, renewal coverage and delivery insights from New Zealand electricity distribution information disclosures"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.1",
+  "pyarrow>=14",
+  "plotly>=5.18",
+  "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+assets = "assetinsights.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+assetinsights = ["config.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/assetinsights/report.py" = ["E501"]
+"src/assetinsights/findings.py" = ["E501"]
